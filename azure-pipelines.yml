@@ -33,14 +33,15 @@ stages:
           # Download the Node.js installer
           $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
           Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
-          # Install Node.js with elevated privileges
-          $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
-          $processStartInfo.FileName = $installerPath
-          $processStartInfo.Arguments = '/quiet /norestart'
-          $processStartInfo.UseShellExecute = $false
-          $processStartInfo.Verb = 'runas'
-          $process = [System.Diagnostics.Process]::Start($processStartInfo)
-          $process.WaitForExit()
+          
+          # Verify the downloaded installer
+          if (!(Test-Path $installerPath)) {
+            Write-Error "Failed to download Node.js installer."
+            exit 1
+          }
+
+          # Install Node.js with elevated privileges using Start-Process
+          Start-Process msiexec.exe -ArgumentList "/i $installerPath /quiet /norestart" -Wait -NoNewWindow -PassThru
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
     - script: |
