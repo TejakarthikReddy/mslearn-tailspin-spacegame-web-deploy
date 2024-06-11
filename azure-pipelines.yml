@@ -24,23 +24,37 @@ stages:
       inputs:
         version: '$(dotnetSdkVersion)'
 
-    - task: PowerShell@2
-      displayName: 'Install Node.js'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Download the Node.js installer
-          $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
-          Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
+    - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
+      - task: PowerShell@2
+        displayName: 'Install Node.js on Windows'
+        inputs:
+          targetType: 'inline'
+          script: |
+            # Download the Node.js installer
+            $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
+            Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
 
-          # Install Node.js with elevated privileges
-          $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
-          $processStartInfo.FileName = $installerPath
-          $processStartInfo.Arguments = '/quiet /norestart'
-          $processStartInfo.UseShellExecute = $false
-          $processStartInfo.Verb = 'runas'
-          $process = [System.Diagnostics.Process]::Start($processStartInfo)
-          $process.WaitForExit()
+            # Install Node.js with elevated privileges
+            $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $processStartInfo.FileName = $installerPath
+            $processStartInfo.Arguments = '/quiet /norestart'
+            $processStartInfo.UseShellExecute = $false
+            $processStartInfo.Verb = 'runas'
+            $process = [System.Diagnostics.Process]::Start($processStartInfo)
+            $process.WaitForExit()
+
+    - ${{ if eq(variables['Agent.OS'], 'Linux') }}:
+      - script: |
+          # Install Node.js on Linux
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+        displayName: 'Install Node.js on Linux'
+
+    - ${{ if eq(variables['Agent.OS'], 'Darwin') }}:
+      - script: |
+          # Install Node.js on macOS
+          brew install node@20
+        displayName: 'Install Node.js on macOS'
 
     - task: Npm@1
       displayName: 'Run npm install'
