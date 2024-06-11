@@ -24,9 +24,23 @@ stages:
       inputs:
         version: '$(dotnetSdkVersion)'
 
-    - script: |
-        choco install -y nodejs --version=20.10.0
+    - task: PowerShell@2
       displayName: 'Install Node.js'
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Download the Node.js installer
+          $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
+          Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
+
+          # Install Node.js with elevated privileges
+          $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+          $processStartInfo.FileName = $installerPath
+          $processStartInfo.Arguments = '/quiet /norestart'
+          $processStartInfo.UseShellExecute = $false
+          $processStartInfo.Verb = 'runas'
+          $process = [System.Diagnostics.Process]::Start($processStartInfo)
+          $process.WaitForExit()
 
     - task: Npm@1
       displayName: 'Run npm install'
