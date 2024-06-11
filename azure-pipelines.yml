@@ -12,7 +12,7 @@ stages:
   - job: 'Build'
     displayName: 'Build job'
     pool:
-      name: 'karthik'  # Self-hosted agent pool name
+      name: 'karthik'  # Agent pool name
       demands:
       - npm
 
@@ -29,12 +29,12 @@ stages:
     - task: Npm@1
       displayName: 'Run npm install'
       inputs:
-        verbose: false
+        verbose: true  # Enable verbose logging for NPM task
 
     - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
       displayName: 'Compile Sass assets'
 
-    - task: Gulp@1
+    - task: gulp@1
       displayName: 'Run gulp tasks'
 
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
