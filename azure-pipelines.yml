@@ -1,10 +1,8 @@
 trigger:
   - '*'
-
 variables:
   buildConfiguration: 'Release'
   releaseBranchName: 'release'
-
 stages:
 - stage: 'Build'
   displayName: 'Build the web application'
@@ -23,7 +21,6 @@ stages:
       displayName: 'Use .NET SDK $(dotnetSdkVersion)'
       inputs:
         version: '$(dotnetSdkVersion)'
-
     - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
       - task: PowerShell@2
         displayName: 'Install Node.js on Windows'
@@ -33,7 +30,6 @@ stages:
             # Download the Node.js installer
             $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
             Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
-
             # Install Node.js with elevated privileges
             $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
             $processStartInfo.FileName = $installerPath
@@ -42,20 +38,17 @@ stages:
             $processStartInfo.Verb = 'runas'
             $process = [System.Diagnostics.Process]::Start($processStartInfo)
             $process.WaitForExit()
-
     - ${{ if eq(variables['Agent.OS'], 'Linux') }}:
       - script: |
           # Install Node.js on Linux
           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
           sudo apt-get install -y nodejs
         displayName: 'Install Node.js on Linux'
-
     - ${{ if eq(variables['Agent.OS'], 'Darwin') }}:
       - script: |
           # Install Node.js on macOS
           brew install node@20
         displayName: 'Install Node.js on macOS'
-
     - task: Npm@1
       displayName: 'Install NPM packages'
       inputs:
@@ -63,32 +56,26 @@ stages:
         customCommand: 'install --no-optional --no-fund --no-progress --only=prod'
         customRegistry: 'useFeed'
         customFeed: 'npm-library'
-        workingDir: $(System.DefaultWorkingDirectory)/client
+        workingDir: '.'  # Install packages in the working directory
         verbose: false
-
     - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
       displayName: 'Compile Sass assets'
-
     - task: gulp@1
       displayName: 'Run gulp tasks'
-
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
       displayName: 'Write build info'
       workingDirectory: $(wwwrootDir)
-
     - task: DotNetCoreCLI@2
       displayName: 'Restore project dependencies'
       inputs:
         command: 'restore'
         projects: '**/*.csproj'
-
     - task: DotNetCoreCLI@2
       displayName: 'Build the project - $(buildConfiguration)'
       inputs:
         command: 'build'
         arguments: '--no-restore --configuration $(buildConfiguration)'
         projects: '**/*.csproj'
-
     - task: DotNetCoreCLI@2
       displayName: 'Publish the project - $(buildConfiguration)'
       inputs:
@@ -97,6 +84,5 @@ stages:
         publishWebProjects: false
         arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
         zipAfterPublish: true
-
     - publish: '$(Build.ArtifactStagingDirectory)'
       artifact: drop
