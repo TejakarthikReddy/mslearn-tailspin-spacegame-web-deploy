@@ -67,17 +67,19 @@ stages:
         workingDir: '.'  # Install packages in the working directory
         verbose: false
 
-    - script: |
-        echo "Operating System: %AGENT_OS%"
-        set "NODEJS_ROOT_DIR=C:\Program Files\nodejs"  # Replace with actual Node.js installation path
-        echo "Node.js root directory: %NODEJS_ROOT_DIR%"
-        if exist "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass.cmd" (
-          "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass.cmd" "%wwwrootDir%" --output "%wwwrootDir%"
-        ) else (
-          echo "Node-sass executable not found"
-          exit /b 1
-        )
+    - task: CmdLine@2
       displayName: 'Compile Sass assets'
+      inputs:
+        script: |
+          echo "Operating System: %AGENT.OS%"
+          set "NODEJS_ROOT_DIR=C:\Program Files\nodejs"  # Replace with actual Node.js installation path
+          echo "Node.js root directory: %NODEJS_ROOT_DIR%"
+          if exist "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass.cmd" (
+            "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass.cmd" "%wwwrootDir%" --output "%wwwrootDir%"
+          ) else (
+            echo "Node-sass executable not found"
+            exit /b 1
+          )
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
     - script: |
