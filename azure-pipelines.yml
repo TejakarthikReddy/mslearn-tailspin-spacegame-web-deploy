@@ -93,7 +93,7 @@ stages:
     - task: gulp@1
       displayName: 'Run gulp tasks'
       inputs:
-        gulpFile: '$(System.DefaultWorkingDirectory)/path/to/your/gulpfile.js'
+        gulpFile: '$(System.DefaultWorkingDirectory)/_work/1/s/gulpfile.js'
         targets: 'build'
         arguments: '--verbose'
 
