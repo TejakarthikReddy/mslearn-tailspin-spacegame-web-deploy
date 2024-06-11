@@ -20,28 +20,6 @@ stages:
       dotnetSdkVersion: '6.x'
 
     steps:
-    - task: PowerShell@2
-      displayName: 'Grant permissions to the agent pool and agent'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Import the Azure DevOps PowerShell module
-          $vssEndpoint = Get-VstsEndpoint -Name 'SystemVssConnection'
-          $vssBearerToken = $vssEndpoint.Authorization.Parameters.AccessToken
-          $vssCred = New-Object System.Management.Automation.PSCredential($vssEndpoint.Authorization.Parameters.Username, (ConvertTo-SecureString -String $vssBearerToken -AsPlainText -Force))
-          Connect-TfsServer -Credential $vssCred -HostName $vssEndpoint.Authorization.Parameters.ServerUri
-          Import-Module -Name "Microsoft.TeamFoundation.DistributedTask.Task.DevServices"
-
-          # Get the user or service account ID from the error message
-          $userId = 'f2163910-e0d1-6722-9e5f-e2e131146c90'
-
-          # Grant the necessary permissions to the user or service account
-          $agentPoolId = (Get-ServiceEndpointDetail -Name 'karthik' -RequiredDescription "*" -Type 'Microsoft.Azure.Services.IHostedService').Id
-          $agentId = (Get-ServiceEndpointDetail -Name 'teja' -RequiredDescription "*" -Type 'Microsoft.Azure.Services.IHostedService').Id
-
-          Add-ServiceEndpointRole -UserId $userId -ServiceEndpointId $agentPoolId -Role 'Administrator'
-          Add-ServiceEndpointRole -UserId $userId -ServiceEndpointId $agentId -Role 'User'
-
     - task: UseDotNet@2
       displayName: 'Use .NET SDK $(dotnetSdkVersion)'
       inputs:
