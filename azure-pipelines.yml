@@ -42,6 +42,9 @@ stages:
 
           # Install Node.js with elevated privileges using Start-Process
           Start-Process msiexec.exe -ArgumentList "/i $installerPath /quiet /norestart" -Wait -NoNewWindow -PassThru
+
+          # Install node-sass globally
+          npm install -g node-sass
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
     - script: |
@@ -77,8 +80,8 @@ stages:
           if exist "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass.cmd" (
             "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass.cmd" "%wwwrootDir%" --output "%wwwrootDir%"
           ) else (
-            echo "Node-sass executable not found"
-            exit /b 1
+            echo "Node-sass executable not found, trying with npx"
+            npx node-sass "%wwwrootDir%" --output "%wwwrootDir%"
           )
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
