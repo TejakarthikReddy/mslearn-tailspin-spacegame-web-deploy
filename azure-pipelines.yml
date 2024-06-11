@@ -68,9 +68,16 @@ stages:
         verbose: false
 
     - script: |
+        echo "Operating System: %AGENT_OS%"
         if "%AGENT_OS%"=="Windows_NT" (
           set "NODEJS_ROOT_DIR=C:\Path\To\Node.js"  # Set the correct path here
-          "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass" "%wwwrootDir%" --output "%wwwrootDir%"
+          echo "Node.js root directory: %NODEJS_ROOT_DIR%"
+          if exist "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass" (
+            "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass" "%wwwrootDir%" --output "%wwwrootDir%"
+          ) else (
+            echo "Node-sass executable not found"
+            exit /b 1
+          )
         ) else (
           npx node-sass "%wwwrootDir%" --output "%wwwrootDir%"
         )
