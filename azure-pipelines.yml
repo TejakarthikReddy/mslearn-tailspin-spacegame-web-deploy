@@ -63,7 +63,7 @@ stages:
         customCommand: 'install --no-optional --no-fund --no-progress --only=prod'
         customRegistry: 'useFeed'
         customFeed: 'npm-library'
-        workingDir: client
+        workingDir: $(System.DefaultWorkingDirectory)/client
         verbose: false
 
     - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
