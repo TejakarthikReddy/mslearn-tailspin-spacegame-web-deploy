@@ -26,14 +26,14 @@ stages:
         version: '$(dotnetSdkVersion)'
 
     - task: PowerShell@2
-      displayName: 'Install Node.js and Gulp on Windows'
+      displayName: 'Install Node.js on Windows'
       inputs:
         targetType: 'inline'
         script: |
           # Download the Node.js installer
           $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
           Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
-          
+
           # Verify the downloaded installer
           if (!(Test-Path $installerPath)) {
             Write-Error "Failed to download Node.js installer."
@@ -45,7 +45,7 @@ stages:
 
           # Install node-sass and gulp globally
           npm install -g node-sass gulp
-          
+
           # Verify installations
           node -v
           npm -v
@@ -53,27 +53,17 @@ stages:
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
     - script: |
-        # Install Node.js and Gulp on Linux
+        # Install Node.js on Linux
         curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
         sudo apt-get install -y nodejs
         sudo npm install -g node-sass gulp
-
-        # Verify installations
-        node -v
-        npm -v
-        gulp -v
       displayName: 'Install Node.js and Gulp on Linux'
       condition: eq(variables['Agent.OS'], 'Linux')
 
     - script: |
-        # Install Node.js and Gulp on macOS
+        # Install Node.js on macOS
         brew install node@20
         npm install -g node-sass gulp
-
-        # Verify installations
-        node -v
-        npm -v
-        gulp -v
       displayName: 'Install Node.js and Gulp on macOS'
       condition: eq(variables['Agent.OS'], 'Darwin')
 
