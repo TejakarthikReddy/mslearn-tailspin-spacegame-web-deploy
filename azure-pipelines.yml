@@ -1,8 +1,10 @@
 trigger:
   - '*'
+
 variables:
   buildConfiguration: 'Release'
   releaseBranchName: 'release'
+
 stages:
 - stage: 'Build'
   displayName: 'Build the web application'
@@ -16,39 +18,59 @@ stages:
     variables:
       wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
       dotnetSdkVersion: '6.x'
+
     steps:
+    - task: PowerShell@2
+      displayName: 'Grant permissions to the agent pool and agent'
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Get the user or service account ID from the error message
+          $userId = 'f2163910-e0d1-6722-9e5f-e2e131146c90'
+
+          # Grant the necessary permissions to the user or service account
+          $agentPoolId = (Get-ServiceEndpointDetail -Name 'karthik' -RequiredDescription "*" -Type 'Microsoft.Azure.Services.IHostedService').Id
+          $agentId = (Get-ServiceEndpointDetail -Name 'teja' -RequiredDescription "*" -Type 'Microsoft.Azure.Services.IHostedService').Id
+
+          Add-ServiceEndpointRole -UserId $userId -ServiceEndpointId $agentPoolId -Role 'Administrator'
+          Add-ServiceEndpointRole -UserId $userId -ServiceEndpointId $agentId -Role 'User'
+
     - task: UseDotNet@2
       displayName: 'Use .NET SDK $(dotnetSdkVersion)'
       inputs:
         version: '$(dotnetSdkVersion)'
-    - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
-      - task: PowerShell@2
-        displayName: 'Install Node.js on Windows'
-        inputs:
-          targetType: 'inline'
-          script: |
-            # Download the Node.js installer
-            $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
-            Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
-            # Install Node.js with elevated privileges
-            $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
-            $processStartInfo.FileName = $installerPath
-            $processStartInfo.Arguments = '/quiet /norestart'
-            $processStartInfo.UseShellExecute = $false
-            $processStartInfo.Verb = 'runas'
-            $process = [System.Diagnostics.Process]::Start($processStartInfo)
-            $process.WaitForExit()
-    - ${{ if eq(variables['Agent.OS'], 'Linux') }}:
-      - script: |
-          # Install Node.js on Linux
-          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-        displayName: 'Install Node.js on Linux'
-    - ${{ if eq(variables['Agent.OS'], 'Darwin') }}:
-      - script: |
-          # Install Node.js on macOS
-          brew install node@20
-        displayName: 'Install Node.js on macOS'
+
+    - task: PowerShell@2
+      displayName: 'Install Node.js on Windows'
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Download the Node.js installer
+          $installerPath = Join-Path $env:TEMP 'node-v20.10.0-x64.msi'
+          Invoke-WebRequest 'https://nodejs.org/dist/v20.10.0/node-v20.10.0-x64.msi' -OutFile $installerPath
+          # Install Node.js with elevated privileges
+          $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+          $processStartInfo.FileName = $installerPath
+          $processStartInfo.Arguments = '/quiet /norestart'
+          $processStartInfo.UseShellExecute = $false
+          $processStartInfo.Verb = 'runas'
+          $process = [System.Diagnostics.Process]::Start($processStartInfo)
+          $process.WaitForExit()
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+    - script: |
+        # Install Node.js on Linux
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+      displayName: 'Install Node.js on Linux'
+      condition: eq(variables['Agent.OS'], 'Linux')
+
+    - script: |
+        # Install Node.js on macOS
+        brew install node@20
+      displayName: 'Install Node.js on macOS'
+      condition: eq(variables['Agent.OS'], 'Darwin')
+
     - task: Npm@1
       displayName: 'Install NPM packages'
       inputs:
@@ -58,6 +80,7 @@ stages:
         customFeed: 'npm-library'
         workingDir: '.'  # Install packages in the working directory
         verbose: false
+
     - script: |
         if "%AGENT_OS%"=="Windows_NT" (
           set "NODEJS_ROOT_DIR=C:\Path\To\Node.js"  # Set the correct path here
@@ -66,22 +89,27 @@ stages:
           npx node-sass "%wwwrootDir%" --output "%wwwrootDir%"
         )
       displayName: 'Compile Sass assets'
+
     - task: gulp@1
       displayName: 'Run gulp tasks'
+
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
       displayName: 'Write build info'
       workingDirectory: $(wwwrootDir)
+
     - task: DotNetCoreCLI@2
       displayName: 'Restore project dependencies'
       inputs:
         command: 'restore'
         projects: '**/*.csproj'
+
     - task: DotNetCoreCLI@2
       displayName: 'Build the project - $(buildConfiguration)'
       inputs:
         command: 'build'
         arguments: '--no-restore --configuration $(buildConfiguration)'
         projects: '**/*.csproj'
+
     - task: DotNetCoreCLI@2
       displayName: 'Publish the project - $(buildConfiguration)'
       inputs:
@@ -90,5 +118,6 @@ stages:
         publishWebProjects: false
         arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
         zipAfterPublish: true
+
     - publish: '$(Build.ArtifactStagingDirectory)'
       artifact: drop
