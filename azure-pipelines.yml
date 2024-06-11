@@ -1,5 +1,7 @@
 trigger:
-  - '*'
+  branches:
+    include:
+      - '*'
 
 variables:
   buildConfiguration: 'Release'
@@ -43,21 +45,28 @@ stages:
           # Install Node.js with elevated privileges using Start-Process
           Start-Process msiexec.exe -ArgumentList "/i $installerPath /quiet /norestart" -Wait -NoNewWindow -PassThru
 
-          # Install node-sass globally
-          npm install -g node-sass
+          # Install node-sass and gulp globally
+          npm install -g node-sass gulp
+
+          # Verify installations
+          node -v
+          npm -v
+          gulp -v
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
     - script: |
         # Install Node.js on Linux
         curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
         sudo apt-get install -y nodejs
-      displayName: 'Install Node.js on Linux'
+        sudo npm install -g node-sass gulp
+      displayName: 'Install Node.js and Gulp on Linux'
       condition: eq(variables['Agent.OS'], 'Linux')
 
     - script: |
         # Install Node.js on macOS
         brew install node@20
-      displayName: 'Install Node.js on macOS'
+        npm install -g node-sass gulp
+      displayName: 'Install Node.js and Gulp on macOS'
       condition: eq(variables['Agent.OS'], 'Darwin')
 
     - task: Npm@1
@@ -92,6 +101,16 @@ stages:
 
     - task: gulp@1
       displayName: 'Run gulp tasks'
+        # Optionally set the gulp file path, targets, and arguments if needed
+        # gulpFile: 'gulpfile.js'
+        # targets: 'build'
+        # arguments: '--verbose'
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+    - script: |
+        gulp
+      displayName: 'Run gulp tasks on non-Windows'
+      condition: ne(variables['Agent.OS'], 'Windows_NT')
 
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
       displayName: 'Write build info'
