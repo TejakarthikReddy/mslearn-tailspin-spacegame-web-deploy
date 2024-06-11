@@ -1,5 +1,5 @@
 trigger:
-- '*'
+  - '*'
 
 variables:
   buildConfiguration: 'Release'
@@ -8,13 +8,11 @@ variables:
 stages:
 - stage: 'Build'
   displayName: 'Build the web application'
-  jobs: 
+  jobs:
   - job: 'Build'
     displayName: 'Build job'
     pool:
-      name: 'karthik'  # Agent pool name
-      demands:
-      - npm
+      vmImage: 'windows-latest'  # Use a Microsoft-hosted agent
 
     variables:
       wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
