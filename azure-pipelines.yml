@@ -60,7 +60,7 @@ stages:
         verbose: false
     - script: |
         if "%AGENT_OS%"=="Windows_NT" (
-          npx node-sass "%wwwrootDir%" --output "%wwwrootDir%"
+          "%NODEJS_ROOT_DIR%\node_modules\node-sass\bin\node-sass" "%wwwrootDir%" --output "%wwwrootDir%"
         ) else (
           npx node-sass "%wwwrootDir%" --output "%wwwrootDir%"
         )
