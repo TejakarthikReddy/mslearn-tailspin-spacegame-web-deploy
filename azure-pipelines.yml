@@ -57,8 +57,13 @@ stages:
         displayName: 'Install Node.js on macOS'
 
     - task: Npm@1
-      displayName: 'Run npm install'
+      displayName: 'Install NPM packages'
       inputs:
+        command: custom
+        customCommand: 'install --no-optional --no-fund --no-progress --only=prod'
+        customRegistry: 'useFeed'
+        customFeed: 'npm-library'
+        workingDir: client
         verbose: false
 
     - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
